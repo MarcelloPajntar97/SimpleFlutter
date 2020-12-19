@@ -96,7 +96,15 @@ class Post {
   }
 }
 
-void main() => runApp(MyApp());
+void main() {
+  runApp(new MaterialApp(
+    title: 'Fetch Data Example',
+    theme: ThemeData(
+      primarySwatch: Colors.blue,
+    ),
+    home: new MyApp(),
+  ));
+}
 
 class MyApp extends StatefulWidget {
   MyApp({Key key}) : super(key: key);
@@ -117,79 +125,102 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Fetch Data Example',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+    return Scaffold(
+      //title: 'Fetch Data Example',
+      // theme: ThemeData(
+      //   primarySwatch: Colors.blue,
+      // ),
+      //home: Scaffold(
+      appBar: AppBar(
+        title: Text('Fetch Data Example'),
       ),
-      home: Scaffold(
-        appBar: AppBar(
-          title: Text('Fetch Data Example'),
-        ),
-        body: FutureBuilder<DataPost>(
-          future: futurePost,
-          builder: (context, snapshot) {
-            return snapshot.hasData
-                ? ListView.builder(
-                    itemCount: snapshot.data.success.length,
-                    itemBuilder: (_, int position) {
-                      final eldata = snapshot.data.success[position];
-                      //final desc = "$imagesPath/${item.row[0]}.jpg";
-                      return Card(
-                          child: ListTile(
-                        title: Text(eldata.title),
-                        subtitle: Text(eldata.description),
-                        trailing: Wrap(
-                          spacing: 12, // space between two icons
-                          children: <Widget>[
-                            new IconButton(
-                                icon: new Icon(Icons.delete),
-                                onPressed: () {
-                                  //select("AddCalibration");
-                                  setState(() {
-                                    _deletePost =
-                                        deletePost(eldata.id.toString());
-                                  });
-                                  print(eldata.title);
-                                }),
-                            new IconButton(
-                                icon: new Icon(Icons.edit),
-                                onPressed: () {
-                                  //select("AddCalibration");
-                                }),
-                          ],
-                        ),
-                        //leading: Icon(Icons.delete),
-                      ));
-                    })
-                : Center(
-                    child: CircularProgressIndicator(),
-                  );
-          },
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => {
-            // Navigator.push(
-            //   context,
-            //   MaterialPageRoute(builder: (context) => NewScreen()),
-            // )
-          },
-          tooltip: 'Increment',
-          child: Icon(Icons.add),
+      body: FutureBuilder<DataPost>(
+        future: futurePost,
+        builder: (context, snapshot) {
+          return snapshot.hasData
+              ? ListView.builder(
+                  itemCount: snapshot.data.success.length,
+                  itemBuilder: (_, int position) {
+                    final eldata = snapshot.data.success[position];
+                    //final desc = "$imagesPath/${item.row[0]}.jpg";
+                    return Card(
+                        child: ListTile(
+                      title: Text(eldata.title),
+                      subtitle: Text(eldata.description),
+                      trailing: Wrap(
+                        spacing: 12, // space between two icons
+                        children: <Widget>[
+                          new IconButton(
+                              icon: new Icon(Icons.delete),
+                              onPressed: () {
+                                //select("AddCalibration");
+                                setState(() {
+                                  _deletePost =
+                                      deletePost(eldata.id.toString());
+                                });
+                                print(eldata.title);
+                              }),
+                          new IconButton(
+                              icon: new Icon(Icons.edit),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          EditPostScreen(post: eldata)),
+                                );
+                                //select("AddCalibration");
+                              }),
+                        ],
+                      ),
+                      //leading: Icon(Icons.delete),
+                    ));
+                  })
+              : Center(
+                  child: CircularProgressIndicator(),
+                );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => NewPostScreen()),
+          )
+        },
+        tooltip: 'Increment',
+        child: Icon(Icons.add),
+      ),
+      //),
+    );
+  }
+}
+
+class EditPostScreen extends StatelessWidget {
+  final Post post;
+  EditPostScreen({Key key, @required this.post}) : super(key: key);
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Edit')),
+      body: Center(
+        child: Text(
+          post.title,
+          style: TextStyle(fontSize: 24.0),
         ),
       ),
     );
   }
 }
 
-class NewScreen extends StatelessWidget {
+class NewPostScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('New Screen')),
       body: Center(
         child: Text(
-          'This is a new screen',
+          'testo a caso',
           style: TextStyle(fontSize: 24.0),
         ),
       ),

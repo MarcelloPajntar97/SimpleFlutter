@@ -38,7 +38,46 @@ Future<DeletePost> deletePost(String id) async {
   if (response.statusCode == 200) {
     return DeletePost.fromJson(jsonDecode(response.body));
   } else {
-    throw Exception('Failed to create album.');
+    throw Exception('Failed to delete post');
+  }
+}
+
+Future<EditPost> editPost(String id, String title, String desc) async {
+  final http.Response response = await http.post(
+    'http://localhost:8000/api/updatepost',
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    },
+    body: jsonEncode(<String, String>{
+      'id': id,
+      'title': title,
+      'desc': desc,
+    }),
+  );
+
+  if (response.statusCode == 200) {
+    return EditPost.fromJson(jsonDecode(response.body));
+  } else {
+    throw Exception('Failed to update post');
+  }
+}
+
+Future<CreatePost> createPost(String title, String desc) async {
+  final http.Response response = await http.post(
+    'http://localhost:8000/api/addposts',
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    },
+    body: jsonEncode(<String, String>{
+      'title': title,
+      'desc': desc,
+    }),
+  );
+
+  if (response.statusCode == 200) {
+    return CreatePost.fromJson(jsonDecode(response.body));
+  } else {
+    throw Exception('Failed to update post');
   }
 }
 
@@ -56,6 +95,30 @@ class DataPost {
     var list = imagesJson['success'] as List;
     List<Post> imagesList = list.map((data) => Post.fromJson(data)).toList();
     return imagesList;
+  }
+}
+
+class CreatePost {
+  final String success;
+
+  CreatePost({this.success});
+
+  factory CreatePost.fromJson(Map<String, dynamic> json) {
+    return CreatePost(
+      success: json['success'],
+    );
+  }
+}
+
+class EditPost {
+  final String success;
+
+  EditPost({this.success});
+
+  factory EditPost.fromJson(Map<String, dynamic> json) {
+    return EditPost(
+      success: json['success'],
+    );
   }
 }
 
@@ -111,6 +174,7 @@ class MyApp extends StatefulWidget {
 
   @override
   _MyAppState createState() => _MyAppState();
+  //EditPostScreen createState() => EditPostScreen();
 }
 
 class _MyAppState extends State<MyApp> {
@@ -158,6 +222,15 @@ class _MyAppState extends State<MyApp> {
                                   _deletePost =
                                       deletePost(eldata.id.toString());
                                 });
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => MyApp()),
+                                );
+                                // setState(() {
+
+                                // });
+                                //Navigator.pop(context);
                                 print(eldata.title);
                               }),
                           new IconButton(
@@ -188,7 +261,7 @@ class _MyAppState extends State<MyApp> {
             MaterialPageRoute(builder: (context) => NewPostScreen()),
           )
         },
-        tooltip: 'Increment',
+        tooltip: 'Add new',
         child: Icon(Icons.add),
       ),
       //),
@@ -197,16 +270,68 @@ class _MyAppState extends State<MyApp> {
 }
 
 class EditPostScreen extends StatelessWidget {
+  String title_post;
+  String description;
+  Future<EditPost> _editPost;
+  final title_insert = TextEditingController();
+  final desc_insert = TextEditingController();
   final Post post;
+  final GlobalKey<FormState> _formKey = GlobalKey();
   EditPostScreen({Key key, @required this.post}) : super(key: key);
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Edit')),
-      body: Center(
-        child: Text(
-          post.title,
-          style: TextStyle(fontSize: 24.0),
+      appBar: AppBar(
+        title: Text("Edit " + post.title),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: <Widget>[
+            Form(
+              key: _formKey,
+              child: Column(
+                children: <Widget>[
+                  TextFormField(
+                    decoration: InputDecoration(
+                        labelText: 'Title', hintText: post.title),
+                    controller: title_insert,
+                  ),
+                  // this is where the
+                  // input goes
+                  TextFormField(
+                    decoration: InputDecoration(
+                        labelText: 'Description', hintText: post.description),
+                    controller: desc_insert,
+                  ),
+                  RaisedButton(
+                    onPressed: () {
+                      //setState(() {
+                      title_post = title_insert.text;
+                      description = desc_insert.text;
+                      if (title_insert.text.isEmpty) {
+                        title_post = post.title;
+                      }
+                      if (desc_insert.text.isEmpty) {
+                        description = post.description;
+                      }
+                      _editPost =
+                          editPost(post.id.toString(), title_post, description);
+                      //});
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => MyApp()),
+                      );
+                    },
+                    child: Text("Update"),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 20,
+            ),
+          ],
         ),
       ),
     );
@@ -214,14 +339,94 @@ class EditPostScreen extends StatelessWidget {
 }
 
 class NewPostScreen extends StatelessWidget {
+  Future<CreatePost> _createPost;
+  // bool validate_title = false;
+  // bool validate_desc = false;
+  final title_new = TextEditingController();
+  final desc_new = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey();
   @override
+  // String checkString(String value) {
+  //   if (value.isEmpty) {
+  //     return "You must type something";
+  //   } else {
+  //     return null;
+  //   }
+  // }
+
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('New Screen')),
-      body: Center(
-        child: Text(
-          'testo a caso',
-          style: TextStyle(fontSize: 24.0),
+      appBar: AppBar(
+        title: Text("New Post"),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: <Widget>[
+            Form(
+              key: _formKey,
+              child: Column(
+                children: <Widget>[
+                  TextFormField(
+                    validator: (value) {
+                      if (value.isEmpty) {
+                        return 'This field is required';
+                      }
+                      return null;
+                    },
+                    decoration: InputDecoration(
+                      labelText: 'Title',
+                      //errorText: checkString(title_new.text),
+                    ),
+                    controller: title_new,
+                  ),
+                  // this is where the
+                  // input goes
+                  TextFormField(
+                    validator: (value) {
+                      if (value.isEmpty) {
+                        return 'This field is required';
+                      }
+                      return null;
+                    },
+                    decoration: InputDecoration(
+                      labelText: 'Description',
+                      //errorText: checkString(desc_new.text),
+                    ),
+                    controller: desc_new,
+                  ),
+                  RaisedButton(
+                    onPressed: () {
+                      //setState(() {
+                      // if (title_new.text.isEmpty) {
+                      //   validate_title = true;
+                      // }
+                      // if (desc_new.text.isEmpty) {
+                      //   validate_desc = true;
+                      // }
+                      if (_formKey.currentState.validate()) {
+                        print("vuoto");
+                        Scaffold.of(context).showSnackBar(
+                            SnackBar(content: Text('Processing Data')));
+                      } else {
+                        print(title_new.text + " spazio " + desc_new.text);
+                        _createPost = createPost(title_new.text, desc_new.text);
+                        //});
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => MyApp()),
+                        );
+                      }
+                    },
+                    child: Text('Submit'),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 20,
+            ),
+          ],
         ),
       ),
     );

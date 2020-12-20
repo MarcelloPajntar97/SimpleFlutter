@@ -404,12 +404,12 @@ class NewPostScreen extends StatelessWidget {
                       // if (desc_new.text.isEmpty) {
                       //   validate_desc = true;
                       // }
-                      if (_formKey.currentState.validate()) {
-                        print("vuoto");
+                      if (!_formKey.currentState.validate()) {
+                        //print("vuoto");
                         Scaffold.of(context).showSnackBar(
                             SnackBar(content: Text('Processing Data')));
                       } else {
-                        print(title_new.text + " spazio " + desc_new.text);
+                        //print(title_new.text + " spazio " + desc_new.text);
                         _createPost = createPost(title_new.text, desc_new.text);
                         //});
                         Navigator.push(

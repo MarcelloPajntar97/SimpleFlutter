@@ -2,15 +2,28 @@
 for backend API visit: https://github.com/MarcelloPajntar97/MicroserviceCRUD
 
 */
-
+import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
-
+import 'package:email_validator/email_validator.dart';
+//import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+//final storage = FlutterSecureStorage();
+
+class GlobalData {
+  static String user_token;
+}
+
 Future<DataPost> fetchPost() async {
-  final response = await http.get('http://localhost:8000/api/posts');
+  final response = await http.get(
+    'http://localhost:8000/api/posts',
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      HttpHeaders.authorizationHeader: "Bearer " + GlobalData.user_token
+    },
+  );
 
   if (response.statusCode == 200) {
     // If the server did return a 200 OK response,
@@ -29,6 +42,7 @@ Future<DeletePost> deletePost(String id) async {
     'http://localhost:8000/api/deletepost',
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
+      HttpHeaders.authorizationHeader: "Bearer " + GlobalData.user_token
     },
     body: jsonEncode(<String, String>{
       'id': id,
@@ -47,6 +61,7 @@ Future<EditPost> editPost(String id, String title, String desc) async {
     'http://localhost:8000/api/updatepost',
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
+      HttpHeaders.authorizationHeader: "Bearer " + GlobalData.user_token
     },
     body: jsonEncode(<String, String>{
       'id': id,
@@ -67,6 +82,7 @@ Future<CreatePost> createPost(String title, String desc) async {
     'http://localhost:8000/api/addposts',
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
+      HttpHeaders.authorizationHeader: "Bearer " + GlobalData.user_token
     },
     body: jsonEncode(<String, String>{
       'title': title,
@@ -77,9 +93,92 @@ Future<CreatePost> createPost(String title, String desc) async {
   if (response.statusCode == 200) {
     return CreatePost.fromJson(jsonDecode(response.body));
   } else {
-    throw Exception('Failed to update post');
+    throw Exception('Failed to create post');
   }
 }
+
+Future<String> login(String email, String password) async {
+  final http.Response response = await http.post(
+    'http://localhost:8000/api/login',
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    },
+    body: jsonEncode(<String, String>{
+      'email': email,
+      'password': password,
+    }),
+  );
+  //GlobalData.status_login = await response.statusCode;
+  if (response.statusCode == 200) {
+    // //print(response.body);
+    // Map<String, dynamic> token = jsonDecode(response.body);
+    // GlobalData.user_token = token["token"];
+    // GlobalData.status_login = response.statusCode;
+    //return Auth.fromJson(jsonDecode(response.body));
+    return response.body;
+  } else {
+    return null;
+  }
+}
+
+Future<String> register(String name, String email, String password) async {
+  final http.Response response = await http.post(
+    'http://localhost:8000/api/register',
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    },
+    body: jsonEncode(<String, String>{
+      'name': name,
+      'email': email,
+      'password': password,
+    }),
+  );
+  //return response.statusCode;
+
+  if (response.statusCode == 201) {
+    //print(response.body);
+    // Map<String, dynamic> token = jsonDecode(response.body);
+    // GlobalData.user_token = token["success"]["token"];
+    // GlobalData.status_login = response.statusCode;
+    // return Auth.fromJson(jsonDecode(response.body));
+    return response.body;
+  } else {
+    return null;
+  }
+}
+
+Future<String> logout() async {
+  final http.Response response = await http.post(
+    'http://localhost:8000/api/logout',
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      HttpHeaders.authorizationHeader: "Bearer " + GlobalData.user_token
+    },
+  );
+
+  if (response.statusCode == 200) {
+    //GlobalData.user_token = "";
+    //GlobalData.status_login = response.statusCode;
+    //return Auth.fromJson(jsonDecode(response.body));
+    return response.body;
+  } else {
+    return null;
+  }
+}
+
+// class Auth {
+//   final String success;
+//   final String error;
+
+//   Auth({this.success, this.error});
+
+//   factory Auth.fromJson(Map<String, dynamic> json) {
+//     return Auth(
+//       success: json['success'],
+//       error: json['error'],
+//     );
+//   }
+// }
 
 class DataPost {
   final List<Post> success;
@@ -137,6 +236,7 @@ class DeletePost {
 class Post {
   final String description;
   final int id;
+  final int user_id;
   final String title;
   final String created_at;
   final String updated_at;
@@ -144,6 +244,7 @@ class Post {
   Post(
       {this.description,
       this.id,
+      this.user_id,
       this.title,
       this.created_at,
       this.updated_at});
@@ -152,6 +253,7 @@ class Post {
     return Post(
       description: json['description'],
       id: json['id'],
+      user_id: json['user_id'],
       title: json['title'],
       created_at: json['created_at'],
       updated_at: json['updated_at'],
@@ -165,7 +267,7 @@ void main() {
     theme: ThemeData(
       primarySwatch: Colors.blue,
     ),
-    home: new MyApp(),
+    home: new LoginScreen(),
   ));
 }
 
@@ -180,6 +282,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   Future<DataPost> futurePost;
   Future<DeletePost> _deletePost;
+  //Future<Auth> _logout;
 
   @override
   void initState() {
@@ -196,7 +299,25 @@ class _MyAppState extends State<MyApp> {
       // ),
       //home: Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text('Fetch Data Example'),
+        leading: GestureDetector(
+          onTap: () async {
+            var log = await logout();
+            if (log != null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => LoginScreen()),
+              );
+              //GlobalData.status_login = 0;
+            } else {
+              print("logout failed");
+            }
+          },
+          child: Icon(
+            Icons.logout,
+          ),
+        ),
       ),
       body: FutureBuilder<DataPost>(
         future: futurePost,
@@ -255,16 +376,186 @@ class _MyAppState extends State<MyApp> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => NewPostScreen()),
-          )
+        onPressed: () {
+          Navigator.of(context).push(_createRoute());
         },
         tooltip: 'Add new',
         child: Icon(Icons.add),
       ),
       //),
+    );
+  }
+}
+
+Route _createRoute() {
+  return PageRouteBuilder(
+    pageBuilder: (context, animation, secondaryAnimation) => NewPostScreen(),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      var begin = Offset(0.0, 1.0);
+      var end = Offset.zero;
+      var curve = Curves.ease;
+
+      var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+
+      return SlideTransition(
+        position: animation.drive(tween),
+        child: child,
+      );
+    },
+  );
+}
+
+class LoginScreen extends StatelessWidget {
+  //Future<String> _login;
+  final email_insert = TextEditingController();
+  final pass_insert = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: Text("Login Screen"),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: <Widget>[
+            Form(
+              key: _formKey,
+              child: Column(
+                children: <Widget>[
+                  TextFormField(
+                    decoration: InputDecoration(labelText: 'Email'),
+                    controller: email_insert,
+                  ),
+                  // this is where the
+                  // input goes
+                  TextFormField(
+                    obscureText: true,
+                    decoration: InputDecoration(labelText: 'Password'),
+                    controller: pass_insert,
+                  ),
+                  RaisedButton(
+                    onPressed: () async {
+                      var jwt =
+                          await login(email_insert.text, pass_insert.text);
+                      var key = jsonDecode(jwt)['success'];
+                      print(key);
+
+                      if (jwt != null) {
+                        //storage.write(key: "jwt", value: key);
+                        GlobalData.user_token = key;
+                        print(GlobalData.user_token);
+                        //print("This is user token " + GlobalData.user_token);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => MyApp()),
+                        );
+                        //GlobalData.status_login = 0;
+                      } else {
+                        print("login failed");
+                      }
+                    },
+                    child: Text("Login"),
+                  ),
+                  new FlatButton(
+                    child: new Text('Create Account'),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => RegisterScreen()),
+                      );
+                    },
+                  )
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class RegisterScreen extends StatelessWidget {
+  //Future<Auth> _register;
+  final email_insert = TextEditingController();
+  final pass_insert = TextEditingController();
+  final name_insert = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey();
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: Text("Register Screen"),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: <Widget>[
+            Form(
+              key: _formKey,
+              child: Column(
+                children: <Widget>[
+                  TextFormField(
+                    decoration: InputDecoration(labelText: 'Name'),
+                    controller: name_insert,
+                  ),
+                  TextFormField(
+                    decoration: InputDecoration(labelText: 'Email'),
+                    controller: email_insert,
+                  ),
+                  // this is where the
+                  // input goes
+                  TextFormField(
+                    obscureText: true,
+                    decoration: InputDecoration(labelText: 'Password'),
+                    controller: pass_insert,
+                  ),
+                  RaisedButton(
+                    onPressed: () async {
+                      var reg = await register(name_insert.text,
+                          email_insert.text, pass_insert.text);
+                      if (reg != null) {
+                        var key = jsonDecode(reg)['success'];
+                        print(key);
+                        GlobalData.user_token = key;
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => MyApp()),
+                        );
+                        //GlobalData.status_login = 0;
+                      } else {
+                        print("resgister failed");
+                      }
+                    },
+                    child: Text("Register"),
+                  ),
+                  new FlatButton(
+                    child: new Text('Back to Login'),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => LoginScreen()),
+                      );
+                    },
+                  )
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 20,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

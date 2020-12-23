@@ -6,11 +6,8 @@ import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
 import 'package:email_validator/email_validator.dart';
-//import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-
-//final storage = FlutterSecureStorage();
 
 class GlobalData {
   static String user_token;
@@ -133,18 +130,18 @@ Future<String> register(String name, String email, String password) async {
       'password': password,
     }),
   );
-  //return response.statusCode;
+  return response.body;
 
-  if (response.statusCode == 201) {
-    //print(response.body);
-    // Map<String, dynamic> token = jsonDecode(response.body);
-    // GlobalData.user_token = token["success"]["token"];
-    // GlobalData.status_login = response.statusCode;
-    // return Auth.fromJson(jsonDecode(response.body));
-    return response.body;
-  } else {
-    return null;
-  }
+  //if (response.statusCode == 201) {
+  //print(response.body);
+  // Map<String, dynamic> token = jsonDecode(response.body);
+  // GlobalData.user_token = token["success"]["token"];
+  // GlobalData.status_login = response.statusCode;
+  // return Auth.fromJson(jsonDecode(response.body));
+  //   return response.body;
+  // } else {
+  //   return null;
+  // }
 }
 
 Future<String> logout() async {
@@ -165,20 +162,6 @@ Future<String> logout() async {
     return null;
   }
 }
-
-// class Auth {
-//   final String success;
-//   final String error;
-
-//   Auth({this.success, this.error});
-
-//   factory Auth.fromJson(Map<String, dynamic> json) {
-//     return Auth(
-//       success: json['success'],
-//       error: json['error'],
-//     );
-//   }
-// }
 
 class DataPost {
   final List<Post> success;
@@ -410,7 +393,11 @@ class LoginScreen extends StatelessWidget {
   final email_insert = TextEditingController();
   final pass_insert = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey();
-
+  void displayDialog(context, title, text) => showDialog(
+        context: context,
+        builder: (context) =>
+            AlertDialog(title: Text(title), content: Text(text)),
+      );
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -489,6 +476,11 @@ class RegisterScreen extends StatelessWidget {
   final pass_insert = TextEditingController();
   final name_insert = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey();
+  void displayDialog(context, title, text) => showDialog(
+        context: context,
+        builder: (context) =>
+            AlertDialog(title: Text(title), content: Text(text)),
+      );
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -521,19 +513,37 @@ class RegisterScreen extends StatelessWidget {
                   ),
                   RaisedButton(
                     onPressed: () async {
-                      var reg = await register(name_insert.text,
-                          email_insert.text, pass_insert.text);
-                      if (reg != null) {
-                        var key = jsonDecode(reg)['success'];
-                        print(key);
-                        GlobalData.user_token = key;
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => MyApp()),
-                        );
-                        //GlobalData.status_login = 0;
-                      } else {
-                        print("resgister failed");
+                      try {
+                        if (!EmailValidator.validate(email_insert.text)) {
+                          displayDialog(
+                              context, "Invalid Email", "insert a valid email");
+                        } else {
+                          var reg = await register(name_insert.text,
+                              email_insert.text, pass_insert.text);
+                          var check = jsonDecode(reg);
+                          if (check.containsKey('success')) {
+                            var key = jsonDecode(reg)['success'];
+                            print(key);
+                            GlobalData.user_token = key;
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => MyApp()),
+                            );
+                            //GlobalData.status_login = 0;
+                          } else if (check.containsKey('error')) {
+                            if (check['error'].contains('email')) {
+                              displayDialog(context, "Invalid Email",
+                                  "The email is already used");
+                              //print("The email is already used");
+                            } else {
+                              displayDialog(
+                                  context, "Error", "Something went wrong!");
+                              //print("Something went wrong!");
+                            }
+                          }
+                        }
+                      } on Exception catch (_) {
+                        print('regsiter failed');
                       }
                     },
                     child: Text("Register"),

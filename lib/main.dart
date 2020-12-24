@@ -15,7 +15,7 @@ class GlobalData {
 
 Future<DataPost> fetchPost() async {
   final response = await http.get(
-    'http://localhost:8000/api/posts',
+    'http://104.236.25.146/api/posts',
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
       HttpHeaders.authorizationHeader: "Bearer " + GlobalData.user_token
@@ -36,7 +36,7 @@ Future<DataPost> fetchPost() async {
 
 Future<DeletePost> deletePost(String id) async {
   final http.Response response = await http.post(
-    'http://localhost:8000/api/deletepost',
+    'http://104.236.25.146/api/deletepost',
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
       HttpHeaders.authorizationHeader: "Bearer " + GlobalData.user_token
@@ -55,7 +55,7 @@ Future<DeletePost> deletePost(String id) async {
 
 Future<EditPost> editPost(String id, String title, String desc) async {
   final http.Response response = await http.post(
-    'http://localhost:8000/api/updatepost',
+    'http://104.236.25.146/api/updatepost',
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
       HttpHeaders.authorizationHeader: "Bearer " + GlobalData.user_token
@@ -76,7 +76,7 @@ Future<EditPost> editPost(String id, String title, String desc) async {
 
 Future<CreatePost> createPost(String title, String desc) async {
   final http.Response response = await http.post(
-    'http://localhost:8000/api/addposts',
+    'http://104.236.25.146/api/addposts',
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
       HttpHeaders.authorizationHeader: "Bearer " + GlobalData.user_token
@@ -96,7 +96,7 @@ Future<CreatePost> createPost(String title, String desc) async {
 
 Future<String> login(String email, String password) async {
   final http.Response response = await http.post(
-    'http://localhost:8000/api/login',
+    'http://104.236.25.146/api/login',
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     },
@@ -120,7 +120,7 @@ Future<String> login(String email, String password) async {
 
 Future<String> register(String name, String email, String password) async {
   final http.Response response = await http.post(
-    'http://localhost:8000/api/register',
+    'http://104.236.25.146/api/register',
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     },
@@ -146,7 +146,7 @@ Future<String> register(String name, String email, String password) async {
 
 Future<String> logout() async {
   final http.Response response = await http.post(
-    'http://localhost:8000/api/logout',
+    'http://104.236.25.146/api/logout',
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
       HttpHeaders.authorizationHeader: "Bearer " + GlobalData.user_token
